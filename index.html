@@ -33,34 +33,54 @@ async function fetchNews() {
     const category = document.getElementById('categoryInput').value.toLowerCase();
     const container = document.getElementById('news-container');
     
+    // Mappa dei feed direttamente nel frontend
+    const feeds = {
+        "politica": [
+            "https://www.ansa.it/sito/notizie/politica/politica_rss.xml",
+            "https://www.ilfattoquotidiano.it/politica/feed/"
+        ],
+        "sport": [
+            "https://sport.sky.it/rss/sport_all.xml",
+            "https://www.gazzetta.it/rss/home.xml"
+        ]
+    };
+
+    if (!feeds[category]) {
+        container.innerHTML = `<div class="error">⚠️ Categoria non trovata. Prova 'politica' o 'sport'.</div>`;
+        return;
+    }
+
     container.innerHTML = '<p class="loading">Caricamento notizie in corso...</p>';
+    container.innerHTML = ''; 
 
     try {
-        const response = await fetch(`api.php?category=${category}`);
-        const data = await response.json();
+        // Interroghiamo ogni feed usando un'API di conversione gratuita
+        for (const url of feeds[category]) {
+            const api_url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+            
+            const response = await fetch(api_url);
+            const data = await response.json();
 
-        if (data.error) {
-            container.innerHTML = `<div class="error">⚠️ ${data.error}</div>`;
-            return;
+            if (data.status === 'ok') {
+                data.items.slice(0, 5).forEach(news => {
+                    container.innerHTML += `
+                        <div class="card">
+                            <div class="source">${data.feed.title}</div>
+                            <h3>${news.title}</h3>
+                            <p>${news.description.substring(0, 150)}...</p>
+                            <small>${news.pubDate}</small><br><br>
+                            <a href="${news.link}" target="_blank">Leggi di più</a>
+                        </div>
+                    `;
+                });
+            }
         }
-
-        container.innerHTML = ''; // Pulisci caricamento
-        data.forEach(news => {
-            container.innerHTML += `
-                <div class="card">
-                    <div class="source">${news.source}</div>
-                    <h3>${news.title}</h3>
-                    <p>${news.description}</p>
-                    <small>${news.date}</small><br><br>
-                    <a href="${news.link}" target="_blank">Leggi di più</a>
-                </div>
-            `;
-        });
     } catch (err) {
-        container.innerHTML = `<div class="error">⚠️ Servizio momentaneamente non disponibile. Riprova più tardi.</div>`;
+        container.innerHTML = `<div class="error">⚠️ Servizio momentaneamente non disponibile.</div>`;
     }
 }
 </script>
 
 </body>
+
 </html>
