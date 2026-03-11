@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>News Hub JSON</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+        .container { max-width: 800px; margin: 50px auto; padding: 20px; }
+        .search-area { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        input { padding: 12px; width: 60%; border: 2px solid #ddd; border-radius: 6px; outline: none; }
+        button { padding: 12px 24px; background: #1a73e8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #news-container { margin-top: 30px; }
+        .card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #1a73e8; }
+        .source { font-size: 0.75rem; color: #1a73e8; font-weight: bold; text-transform: uppercase; }
+        .error { color: #d93025; background: #f8d7da; padding: 15px; border-radius: 8px; text-align: center; }
+        .loading { font-style: italic; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="search-area">
+        <h1>Global News Aggregator</h1>
+        <input type="text" id="categoryInput" placeholder="Digita 'politica' o 'sport'...">
+        <button onclick="fetchNews()">Cerca</button>
+    </div>
+
+    <div id="news-container"></div>
+</div>
+
+<script>
+async function fetchNews() {
+    const category = document.getElementById('categoryInput').value.toLowerCase();
+    const container = document.getElementById('news-container');
+    
+    container.innerHTML = '<p class="loading">Caricamento notizie in corso...</p>';
+
+    try {
+        const response = await fetch(`api.php?category=${category}`);
+        const data = await response.json();
+
+        if (data.error) {
+            container.innerHTML = `<div class="error">⚠️ ${data.error}</div>`;
+            return;
+        }
+
+        container.innerHTML = ''; // Pulisci caricamento
+        data.forEach(news => {
+            container.innerHTML += `
+                <div class="card">
+                    <div class="source">${news.source}</div>
+                    <h3>${news.title}</h3>
+                    <p>${news.description}</p>
+                    <small>${news.date}</small><br><br>
+                    <a href="${news.link}" target="_blank">Leggi di più</a>
+                </div>
+            `;
+        });
+    } catch (err) {
+        container.innerHTML = `<div class="error">⚠️ Servizio momentaneamente non disponibile. Riprova più tardi.</div>`;
+    }
+}
+</script>
+
+</body>
+</html>
